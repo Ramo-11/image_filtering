@@ -2,8 +2,8 @@
 #include <stdlib.h>
 #include <math.h>
 
-#define WIDTH 450
-#define HEIGHT 399
+#define WIDTH 750
+#define HEIGHT 500
 #define DATA_SIZE WIDTH * HEIGHT
 #define FILTER_SIZE_3_3 3
 #define FILTER_SIZE_5_5 5
