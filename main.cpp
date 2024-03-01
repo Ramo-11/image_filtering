@@ -2,21 +2,20 @@
 #include <stdlib.h>
 #include <math.h>
 
-#define WIDTH 750
-#define HEIGHT 500
-#define DATA_SIZE WIDTH*HEIGHT
+#define WIDTH 450
+#define HEIGHT 399
+#define DATA_SIZE WIDTH * HEIGHT
 #define FILTER_SIZE_3_3 3
 #define FILTER_SIZE_5_5 5
 
 // Sobel Operators
-// Adjusted 3x3 Sobel-like filters with weights
-int sobelHorizontalFilter3X3[FILTER_SIZE_3_3][FILTER_SIZE_3_3] = {
+int sobelHorizontalFilter3x3[FILTER_SIZE_3_3][FILTER_SIZE_3_3] = {
     {-1, 0, 1},
     {-2, 0, 2},
     {-1, 0, 1}
 };
 
-int sobelVerticalFilter3X3[FILTER_SIZE_3_3][FILTER_SIZE_3_3] = {
+int sobelVerticalFilter3x3[FILTER_SIZE_3_3][FILTER_SIZE_3_3] = {
     {-1, -2, -1},
     {0,  0,  0},
     {1,  2,  1}
@@ -42,9 +41,7 @@ int sobelVerticalFilter5x5[FILTER_SIZE_5_5][FILTER_SIZE_5_5] = {
 int getMin(int, int);
 int getMax(int, int);
 
-void applySobelHorizontal(unsigned char src[HEIGHT][WIDTH], unsigned char dst[HEIGHT][WIDTH]);
-void applySobelVertical(unsigned char src[HEIGHT][WIDTH], unsigned char dst[HEIGHT][WIDTH]);
-
+void applySobel3x3(unsigned char src[HEIGHT][WIDTH], unsigned char dst[HEIGHT][WIDTH], int filter[FILTER_SIZE_3_3][FILTER_SIZE_3_3]);
 void applySobel5x5(unsigned char src[HEIGHT][WIDTH], unsigned char dst[HEIGHT][WIDTH], int filter[FILTER_SIZE_5_5][FILTER_SIZE_5_5]);
 
 
@@ -58,35 +55,35 @@ int main() {
     unsigned char image_input[HEIGHT][WIDTH];
     unsigned char image_outputH_3_3[HEIGHT][WIDTH], image_outputV_3_3[HEIGHT][WIDTH];
     unsigned char image_outputH_5_5[HEIGHT][WIDTH], image_outputV_5_5[HEIGHT][WIDTH];
-    int i, j;
 
     inputFile = fopen("unesco750-1.raw", "rb");
+    // inputFile = fopen("L.tif", "rb");
     fread(inputData, 1, DATA_SIZE, inputFile);
     fclose(inputFile);
 
     // Convert linear array to 2D array for processing
-    for (i = 0; i < HEIGHT; i++) {
-        for (j = 0; j < WIDTH; j++) {
+    for (int i = 0; i < HEIGHT; i++) {
+        for (int j = 0; j < WIDTH; j++) {
             image_input[i][j] = inputData[i * WIDTH + j];
         }
     }
 
     applySobel5x5(image_input, image_outputH_5_5, sobelHorizontalFilter5x5);
     applySobel5x5(image_input, image_outputV_5_5, sobelVerticalFilter5x5);
-    applySobelHorizontal(image_input, image_outputH_3_3);
-    applySobelVertical(image_input, image_outputV_3_3);
+    applySobel3x3(image_input, image_outputH_3_3, sobelHorizontalFilter3x3);
+    applySobel3x3(image_input, image_outputV_3_3, sobelVerticalFilter3x3);
 
     // Convert 2D array back to linear array for horizontal output
-    for (i = 0; i < HEIGHT; i++) {
-        for (j = 0; j < WIDTH; j++) {
+    for (int i = 0; i < HEIGHT; i++) {
+        for (int j = 0; j < WIDTH; j++) {
             outputDataH_3_3[i * WIDTH + j] = image_outputH_3_3[i][j];
             outputDataH_5_5[i * WIDTH + j] = image_outputH_5_5[i][j];
         }
     }
 
     // Convert 2D array back to linear array for vertical output
-    for (i = 0; i < HEIGHT; i++) {
-        for (j = 0; j < WIDTH; j++) {
+    for (int i = 0; i < HEIGHT; i++) {
+        for (int j = 0; j < WIDTH; j++) {
             outputDataV_3_3[i * WIDTH + j] = image_outputV_3_3[i][j];
             outputDataV_5_5[i * WIDTH + j] = image_outputV_5_5[i][j];
         }
@@ -117,46 +114,30 @@ int getMax(int a, int b) {
     return (a > b) ? a : b;
 }
 
-void applySobelHorizontal(unsigned char src[HEIGHT][WIDTH], unsigned char dst[HEIGHT][WIDTH]) {
-    int x, y, i, j, sobelHorizontal;
-    for (y = 1; y < HEIGHT - 1; y++) {
-        for (x = 1; x < WIDTH - 1; x++) {
-            sobelHorizontal = 0;
-            for (i = -1; i <= 1; i++) {
-                for (j = -1; j <= 1; j++) {
-                    sobelHorizontal += src[y + i][x + j] * sobelHorizontalFilter3X3[i + 1][j + 1];
+void applySobel3x3(unsigned char src[HEIGHT][WIDTH], unsigned char dst[HEIGHT][WIDTH], int filter[FILTER_SIZE_3_3][FILTER_SIZE_3_3]) {
+    int gradient;
+    int offset = 1;
+    for (int y = offset; y < HEIGHT - offset; y++) {
+        for (int x = offset; x < WIDTH - offset; x++) {
+            gradient = 0;
+            for (int i = -offset; i <= offset; i++) {
+                for (int j = -offset; j <= offset; j++) {
+                    gradient += src[y + i][x + j] * filter[i + offset][j + offset];
                 }
             }
-            // Adjust the scaling factor here to soften the filter effect
-            dst[y][x] = (unsigned char)(getMin(getMax((abs(sobelHorizontal) / 8) + 128, 0), 255));
-        }
-    }
-}
-
-void applySobelVertical(unsigned char src[HEIGHT][WIDTH], unsigned char dst[HEIGHT][WIDTH]) {
-    int x, y, i, j, sobelVertical;
-    for (y = 1; y < HEIGHT - 1; y++) {
-        for (x = 1; x < WIDTH - 1; x++) {
-            sobelVertical = 0;
-            for (i = -1; i <= 1; i++) {
-                for (j = -1; j <= 1; j++) {
-                    sobelVertical += src[y + i][x + j] * sobelVerticalFilter3X3[i + 1][j + 1];
-                }
-            }
-            // Adjust the scaling factor here to soften the filter effect
-            dst[y][x] = (unsigned char)(getMin(getMax((abs(sobelVertical) / 8) + 128, 0), 255));
+            dst[y][x] = (unsigned char)(getMin(getMax((abs(gradient) / 8) + 128, 0), 255));
         }
     }
 }
 
 void applySobel5x5(unsigned char src[HEIGHT][WIDTH], unsigned char dst[HEIGHT][WIDTH], int filter[FILTER_SIZE_5_5][FILTER_SIZE_5_5]) {
-    int x, y, i, j, gradient;
+    int gradient;
     int offset = FILTER_SIZE_5_5 / 2;
-    for (y = offset; y < HEIGHT - offset; y++) {
-        for (x = offset; x < WIDTH - offset; x++) {
+    for (int y = offset; y < HEIGHT - offset; y++) {
+        for (int x = offset; x < WIDTH - offset; x++) {
             gradient = 0;
-            for (i = -offset; i <= offset; i++) {
-                for (j = -offset; j <= offset; j++) {
+            for (int i = -offset; i <= offset; i++) {
+                for (int j = -offset; j <= offset; j++) {
                     gradient += src[y + i][x + j] * filter[i + offset][j + offset];
                 }
             }

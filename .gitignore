@@ -1,3 +1,4 @@
 images/
-this.dSYM/
+main.dSYM/
 .vscode
+main
