@@ -1,12 +1,15 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
+#include <iostream>
 
-#define WIDTH 750
-#define HEIGHT 500
+#define WIDTH 750 // second image width = 450
+#define HEIGHT 500 // second image width = 339
 #define DATA_SIZE WIDTH * HEIGHT
 #define FILTER_SIZE_3_3 3
 #define FILTER_SIZE_5_5 5
+
+const char *fileName = "unesco750-1.raw"; // second image name = L.raw
 
 // Sobel Operators
 int sobelHorizontalFilter3x3[FILTER_SIZE_3_3][FILTER_SIZE_3_3] = {
@@ -56,8 +59,7 @@ int main() {
     unsigned char image_outputH_3_3[HEIGHT][WIDTH], image_outputV_3_3[HEIGHT][WIDTH];
     unsigned char image_outputH_5_5[HEIGHT][WIDTH], image_outputV_5_5[HEIGHT][WIDTH];
 
-    inputFile = fopen("unesco750-1.raw", "rb");
-    // inputFile = fopen("L.tif", "rb");
+    inputFile = fopen(fileName, "rb");
     fread(inputData, 1, DATA_SIZE, inputFile);
     fclose(inputFile);
 
